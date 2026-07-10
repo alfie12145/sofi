@@ -19,6 +19,7 @@ import { IntroVideo } from "./MyComp/IntroVideo";
 import { Main } from "./MyComp/Main";
 import { NextLogo } from "./MyComp/NextLogo";
 import { PotatoHistory } from "./MyComp/PotatoHistory";
+import { PotatoHistoryRealistic } from "./MyComp/PotatoHistoryRealistic";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -55,6 +56,14 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id={POTATO_COMP_NAME}
         component={PotatoHistory}
+        durationInFrames={POTATO_DURATION_IN_FRAMES}
+        fps={POTATO_FPS}
+        width={POTATO_WIDTH}
+        height={POTATO_HEIGHT}
+      />
+      <Composition
+        id="PotatoHistoryRealistic"
+        component={PotatoHistoryRealistic}
         durationInFrames={POTATO_DURATION_IN_FRAMES}
         fps={POTATO_FPS}
         width={POTATO_WIDTH}
