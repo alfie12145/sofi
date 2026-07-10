@@ -2,24 +2,16 @@ import { ContactShadows, Environment, PerspectiveCamera } from "@react-three/dre
 import { interpolate } from "remotion";
 import React from "react";
 import { RealisticPotato } from "./RealisticPotato";
+import type { Beat } from "./beats";
 import type { Mood } from "./types";
 
 const MOOD_DISTANCE: Record<Mood, number> = {
-  normal: 11,
-  excited: 9.3,
-  alarmed: 8.6,
-  sneaky: 10.2,
-  sad: 12.5,
-  proud: 10.5,
-};
-
-const MOOD_SPEED: Record<Mood, number> = {
-  normal: 1,
-  excited: 1.6,
-  alarmed: 1.9,
-  sneaky: 0.7,
-  sad: 0.35,
-  proud: 0.8,
+  normal: 12,
+  excited: 10.3,
+  alarmed: 9.6,
+  sneaky: 11.2,
+  sad: 13.5,
+  proud: 11.5,
 };
 
 export const RealisticScene: React.FC<{
@@ -27,25 +19,51 @@ export const RealisticScene: React.FC<{
   accent: string;
   mood: Mood;
   muted?: boolean;
-  localFrame: number;
+  beat: Beat;
+  beatLocalFrame: number;
   overallFrame: number;
-  duration: number;
-}> = ({ bg, accent, mood, muted, localFrame, overallFrame, duration }) => {
-  const distance = MOOD_DISTANCE[mood];
-  const speed = muted ? 0.3 : MOOD_SPEED[mood];
+  sceneLocalFrame: number;
+  sceneDuration: number;
+}> = ({
+  bg,
+  accent,
+  mood,
+  muted,
+  beat,
+  beatLocalFrame,
+  overallFrame,
+  sceneLocalFrame,
+  sceneDuration,
+}) => {
+  const baseDistance = MOOD_DISTANCE[mood];
+  const distance = baseDistance * beat.cameraDistanceMul;
 
-  const popIn = interpolate(localFrame, [0, 16], [0, 1], {
+  const camX = Math.sin(beat.cameraAngle) * distance * 0.5;
+  const camZ = Math.cos(beat.cameraAngle) * distance;
+  const camY = beat.cameraHeight;
+  const yaw = Math.atan2(camX, camZ);
+
+  const scenePopIn = interpolate(sceneLocalFrame, [0, 14], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const popOut = interpolate(localFrame, [duration - 10, duration], [1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const pop = Math.min(popIn, popOut);
-  const cameraDistance = distance + (1 - pop) * 3;
+  const scenePopOut = interpolate(
+    sceneLocalFrame,
+    [sceneDuration - 10, sceneDuration],
+    [1, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+  const scenePop = Math.min(scenePopIn, scenePopOut);
 
-  const rotation = (overallFrame / 90) * speed;
+  const punch = muted
+    ? 1
+    : interpolate(beatLocalFrame, [0, 6], [1.09, 1], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+      });
+
+  const rotationSpeed = muted ? 0.012 : 0.045;
+  const rotation = overallFrame * rotationSpeed;
   const bob = muted ? 0 : Math.sin(overallFrame / 20) * 0.05;
 
   return (
@@ -54,9 +72,9 @@ export const RealisticScene: React.FC<{
       <fog attach="fog" args={[bg, 9, 20]} />
       <PerspectiveCamera
         makeDefault
-        position={[0, 1.4, cameraDistance]}
-        rotation={[-0.1, 0, 0]}
-        fov={32}
+        position={[camX, camY, camZ]}
+        rotation={[-0.08, yaw, 0]}
+        fov={34}
       />
       <ambientLight intensity={0.35} />
       <directionalLight
@@ -81,7 +99,7 @@ export const RealisticScene: React.FC<{
           <meshBasicMaterial color={bg} />
         </mesh>
       </Environment>
-      <group position={[0, bob, 0]} rotation={[0, rotation, 0]} scale={pop}>
+      <group position={[0, bob, 0]} rotation={[0, rotation, 0]} scale={scenePop * punch}>
         <RealisticPotato seed={3} />
       </group>
       <ContactShadows position={[0, -0.58, 0]} opacity={0.55} scale={6} blur={2.2} far={2} />

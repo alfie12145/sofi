@@ -1,9 +1,10 @@
 import { ThreeCanvas } from "@remotion/three";
-import React, { Suspense, useLayoutEffect } from "react";
+import React, { Suspense, useLayoutEffect, useMemo } from "react";
 import {
   AbsoluteFill,
   Audio,
   interpolate,
+  Sequence,
   staticFile,
   useCurrentFrame,
   useDelayRender,
@@ -13,6 +14,7 @@ import {
   POTATO_HEIGHT,
   POTATO_WIDTH,
 } from "../../../types/constants";
+import { Beat, buildSceneBeats } from "./potatoRealistic/beats";
 import { RealisticScene } from "./potatoRealistic/RealisticScene";
 import { Mood } from "./potatoRealistic/types";
 
@@ -65,6 +67,31 @@ const starts = scenes.map((s) => {
   return start;
 });
 
+type GlobalBeat = Beat & { absStart: number; absEnd: number; sceneIndex: number };
+
+const globalBeats: GlobalBeat[] = scenes.flatMap((scene, sceneIndex) =>
+  buildSceneBeats(scene.text, scene.duration, sceneIndex).map((beat) => ({
+    ...beat,
+    absStart: starts[sceneIndex] + beat.localStart,
+    absEnd: starts[sceneIndex] + beat.localEnd,
+    sceneIndex,
+  })),
+);
+
+function findSceneIndex(frame: number): number {
+  for (let i = 0; i < scenes.length; i++) {
+    if (frame < starts[i] + scenes[i].duration) return i;
+  }
+  return scenes.length - 1;
+}
+
+function findBeatIndex(frame: number): number {
+  for (let i = 0; i < globalBeats.length; i++) {
+    if (frame < globalBeats[i].absEnd) return i;
+  }
+  return globalBeats.length - 1;
+}
+
 const SuspenseUnblocker: React.FC = () => {
   const { delayRender, continueRender } = useDelayRender();
   useLayoutEffect(() => {
@@ -76,16 +103,10 @@ const SuspenseUnblocker: React.FC = () => {
 
 const Scene3D: React.FC = () => {
   const frame = useCurrentFrame();
-
-  let activeIndex = scenes.length - 1;
-  for (let i = 0; i < scenes.length; i++) {
-    if (frame < starts[i] + scenes[i].duration) {
-      activeIndex = i;
-      break;
-    }
-  }
-  const scene = scenes[activeIndex];
-  const localFrame = frame - starts[activeIndex];
+  const sceneIndex = findSceneIndex(frame);
+  const beatIndex = findBeatIndex(frame);
+  const scene = scenes[sceneIndex];
+  const beat = globalBeats[beatIndex];
 
   return (
     <RealisticScene
@@ -93,36 +114,70 @@ const Scene3D: React.FC = () => {
       accent={scene.accent}
       mood={scene.mood}
       muted={scene.muted}
-      localFrame={localFrame}
+      beat={beat}
+      beatLocalFrame={frame - beat.absStart}
       overallFrame={frame}
-      duration={scene.duration}
+      sceneLocalFrame={frame - starts[sceneIndex]}
+      sceneDuration={scene.duration}
     />
   );
 };
 
-const CaptionOverlay: React.FC = () => {
+const CutFlash: React.FC = () => {
   const frame = useCurrentFrame();
+  const beatIndex = findBeatIndex(frame);
+  const beat = globalBeats[beatIndex];
+  const localFrame = frame - beat.absStart;
 
-  let activeIndex = scenes.length - 1;
-  for (let i = 0; i < scenes.length; i++) {
-    if (frame < starts[i] + scenes[i].duration) {
-      activeIndex = i;
-      break;
-    }
-  }
-  const scene = scenes[activeIndex];
-  const localFrame = frame - starts[activeIndex];
+  if (frame === 0) return null;
 
-  const opacity = interpolate(
-    localFrame,
-    [0, 10, scene.duration - 8, scene.duration],
-    [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
-  );
-  const rise = interpolate(localFrame, [0, 14], [24, 0], {
+  const opacity = interpolate(localFrame, [0, 1, 4], [0, 0.28, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+
+  if (opacity <= 0) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        backgroundColor: "white",
+        opacity,
+        pointerEvents: "none",
+      }}
+    />
+  );
+};
+
+const CutStingers: React.FC = () => (
+  <>
+    {globalBeats.map((beat, i) => {
+      if (beat.absStart === 0) return null;
+      const src = beat.isSceneStart ? "whoosh.wav" : "pop.wav";
+      return (
+        <Sequence key={i} from={beat.absStart - 2} durationInFrames={20}>
+          <Audio src={staticFile(`sfx/${src}`)} volume={beat.isSceneStart ? 0.55 : 0.35} />
+        </Sequence>
+      );
+    })}
+  </>
+);
+
+const WordCaption: React.FC = () => {
+  const frame = useCurrentFrame();
+  const beatIndex = findBeatIndex(frame);
+  const beat = globalBeats[beatIndex];
+  const localFrame = frame - beat.absStart;
+  const beatDuration = beat.absEnd - beat.absStart;
+
+  const opacity = interpolate(
+    localFrame,
+    [0, 6, Math.max(6, beatDuration - 6), beatDuration],
+    [0, 1, 1, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
 
   return (
     <div
@@ -130,43 +185,36 @@ const CaptionOverlay: React.FC = () => {
         position: "absolute",
         left: 0,
         right: 0,
-        bottom: 210,
+        bottom: 230,
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "0 70px",
+        justifyContent: "center",
+        padding: "0 64px",
         opacity,
-        transform: `translateY(${rise}px)`,
       }}
     >
       <div
         style={{
-          fontSize: 62,
+          fontSize: 66,
           fontWeight: 800,
           color: "white",
           textAlign: "center",
-          lineHeight: 1.2,
+          lineHeight: 1.15,
           fontFamily,
-          textShadow: "0 4px 24px rgba(0,0,0,0.55)",
+          textShadow: "0 4px 24px rgba(0,0,0,0.6)",
         }}
       >
-        {scene.text}
+        {beat.words.map((w, i) => (
+          <span
+            key={i}
+            style={{
+              color: i === beat.emphasisIndex ? "#fde047" : "white",
+              marginRight: 16,
+            }}
+          >
+            {w}
+          </span>
+        ))}
       </div>
-      {scene.sub && (
-        <div
-          style={{
-            marginTop: 18,
-            fontSize: 36,
-            fontWeight: 600,
-            color: "rgba(255,255,255,0.85)",
-            textAlign: "center",
-            fontFamily,
-            textShadow: "0 2px 16px rgba(0,0,0,0.5)",
-          }}
-        >
-          {scene.sub}
-        </div>
-      )}
     </div>
   );
 };
@@ -242,7 +290,9 @@ export const PotatoHistoryRealistic: React.FC = () => {
           <Scene3D />
         </Suspense>
       </ThreeCanvas>
-      <CaptionOverlay />
+      <CutFlash />
+      <CutStingers />
+      <WordCaption />
       <ProgressBar />
       <Watermark />
     </AbsoluteFill>
