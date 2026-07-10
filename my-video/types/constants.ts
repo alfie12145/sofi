@@ -32,4 +32,4 @@ export const POTATO_COMP_NAME = "PotatoHistory";
 export const POTATO_WIDTH = 1080;
 export const POTATO_HEIGHT = 1920;
 export const POTATO_FPS = 30;
-export const POTATO_DURATION_IN_FRAMES = 1800;
+export const POTATO_DURATION_IN_FRAMES = 2070;
