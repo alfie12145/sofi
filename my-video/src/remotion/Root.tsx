@@ -6,6 +6,11 @@ import {
   DURATION_IN_FRAMES,
   INTRO_COMP_NAME,
   INTRO_DURATION_IN_FRAMES,
+  POTATO_COMP_NAME,
+  POTATO_DURATION_IN_FRAMES,
+  POTATO_FPS,
+  POTATO_HEIGHT,
+  POTATO_WIDTH,
   VIDEO_FPS,
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
@@ -13,6 +18,7 @@ import {
 import { IntroVideo } from "./MyComp/IntroVideo";
 import { Main } from "./MyComp/Main";
 import { NextLogo } from "./MyComp/NextLogo";
+import { PotatoHistory } from "./MyComp/PotatoHistory";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -45,6 +51,14 @@ export const RemotionRoot: React.FC = () => {
         width={VIDEO_WIDTH}
         height={VIDEO_HEIGHT}
         defaultProps={defaultIntroVideoProps}
+      />
+      <Composition
+        id={POTATO_COMP_NAME}
+        component={PotatoHistory}
+        durationInFrames={POTATO_DURATION_IN_FRAMES}
+        fps={POTATO_FPS}
+        width={POTATO_WIDTH}
+        height={POTATO_HEIGHT}
       />
     </>
   );

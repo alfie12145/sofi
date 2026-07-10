@@ -27,3 +27,9 @@ export const defaultIntroVideoProps: z.infer<typeof IntroVideoProps> = {
 };
 
 export const INTRO_DURATION_IN_FRAMES = 300;
+
+export const POTATO_COMP_NAME = "PotatoHistory";
+export const POTATO_WIDTH = 1080;
+export const POTATO_HEIGHT = 1920;
+export const POTATO_FPS = 30;
+export const POTATO_DURATION_IN_FRAMES = 1800;
