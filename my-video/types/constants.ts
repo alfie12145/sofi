@@ -13,3 +13,17 @@ export const DURATION_IN_FRAMES = 200;
 export const VIDEO_WIDTH = 1280;
 export const VIDEO_HEIGHT = 720;
 export const VIDEO_FPS = 30;
+
+export const INTRO_COMP_NAME = "IntroVideo";
+
+export const IntroVideoProps = z.object({
+  companyName: z.string(),
+  tagline: z.string(),
+});
+
+export const defaultIntroVideoProps: z.infer<typeof IntroVideoProps> = {
+  companyName: "Chongbians Kitchen",
+  tagline: "Chinese Cuisine at your home",
+};
+
+export const INTRO_DURATION_IN_FRAMES = 300;

@@ -1,4 +1,3 @@
-import { fontFamily, loadFont } from "@remotion/google-fonts/Inter";
 import {
   AbsoluteFill,
   Sequence,
@@ -12,10 +11,8 @@ import { NextLogo } from "./NextLogo";
 import { Rings } from "./Rings";
 import { TextFade } from "./TextFade";
 
-loadFont("normal", {
-  subsets: ["latin"],
-  weights: ["400", "700"],
-});
+const fontFamily =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 export const Main = ({ title }: z.infer<typeof CompositionProps>) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();

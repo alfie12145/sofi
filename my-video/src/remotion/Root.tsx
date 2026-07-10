@@ -1,12 +1,16 @@
 import { Composition } from "remotion";
 import {
   COMP_NAME,
+  defaultIntroVideoProps,
   defaultMyCompProps,
   DURATION_IN_FRAMES,
+  INTRO_COMP_NAME,
+  INTRO_DURATION_IN_FRAMES,
   VIDEO_FPS,
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
 } from "../../types/constants";
+import { IntroVideo } from "./MyComp/IntroVideo";
 import { Main } from "./MyComp/Main";
 import { NextLogo } from "./MyComp/NextLogo";
 
@@ -32,6 +36,15 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{
           outProgress: 0,
         }}
+      />
+      <Composition
+        id={INTRO_COMP_NAME}
+        component={IntroVideo}
+        durationInFrames={INTRO_DURATION_IN_FRAMES}
+        fps={VIDEO_FPS}
+        width={VIDEO_WIDTH}
+        height={VIDEO_HEIGHT}
+        defaultProps={defaultIntroVideoProps}
       />
     </>
   );
